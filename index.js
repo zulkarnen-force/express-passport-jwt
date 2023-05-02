@@ -12,6 +12,8 @@ const server = http.createServer(app)
 
 app.use(express.json())
 app.use(passport.initialize())
+import dotenv from 'dotenv'
+dotenv.config()
 
 import passportJwt from './passport-jwt.js'
 
@@ -24,26 +26,34 @@ app.get('/', (req, res) => {
 })
 
 app.post('/register', async (req, res) => {
-    const user = new User({
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 10),
-    })
-
+    
     try {
+        if (!req.body.password) {
+            throw new Error('password required')
+        }
+        const user = new User({
+            name: req.body.name,
+            nim: req.body.nim,
+            email: req.body.email,
+            password: bcrypt.hashSync(req.body.password, 10),
+        })
         await user.save()
-        return res.json({
+        return res.status(201).json({
             result: {
                 message: 'user created successfully',
-                success: true
+                success: true,
+                data: {
+                    nim: user.nim
+                }
             }
-        }).status(201)
+        })
     } catch (error) {
-        return res.json({
-            result: {
-                message: 'user created failure',
+        return res.status(400).json({
+            errors: {
+                message: error.message,
                 success: false
             }
-        }).status(400)
+        })
     }
 
 })
@@ -74,7 +84,7 @@ app.post('/login', async (req, res) => {
             id: user._id
         }
 
-        const token = jwt.sign(payload, 'randomstring', {expiresIn: '1d'})
+        const token = jwt.sign(payload, process.env.SECRET_KEY, {expiresIn: '1d'})
 
         return res.json({
             result: {
@@ -91,6 +101,9 @@ app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res)
 
 })
 
-server.listen(3000, () => {
+import mongoose from "mongoose";
+
+server.listen(process.env.PORT, () => {
     console.log('server running on http://localhost:3000')
+    mongoose.connect(process.env.MONGO_URI)
 })
