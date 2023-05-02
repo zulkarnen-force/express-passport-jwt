@@ -3,6 +3,7 @@ import http from 'http'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
+import {body, validationResult} from 'express-validator'
 
 import User from './db.js'
 
@@ -59,24 +60,35 @@ app.post('/register', async (req, res) => {
 })
 
 
-app.post('/login', async (req, res) => {
+app.post('/login', body('email').notEmpty(), body('password').notEmpty(), async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+        return res.status(400).json({
+            errors: {
+                message: 'validation error',
+                success: false,
+                detail: result.array()
+            }
+        })
+    }
+    
     const user = User.findOne({email: req.body.email}).then((user) => {
         if (!user) {
-            return res.json({
+            return res.status(404).json({
                 errors: {
                     message: 'user not found',
                     success: false
                 }
-            }).status(404)
+            })
         }
 
         if (!bcrypt.compareSync(req.body.password, user.password)) {
-            return res.json({
+            return res.status(400).json({
                 errors: {
                     message: 'wrong password',
                     success: false
                 }
-            }).status(400)
+            })
         }
 
         const payload = {
@@ -86,24 +98,37 @@ app.post('/login', async (req, res) => {
 
         const token = jwt.sign(payload, process.env.SECRET_KEY, {expiresIn: '1d'})
 
-        return res.json({
+        return res.status(200).json({
             result: {
                 token: token,
                 success: true
             }
-        }).status(200)
+        })
     
     })
 })
 
 
 app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res) => {
-
+    return res.status(200).json({
+        result: {
+            message: 'information of user',
+            data: {
+                nim: req.user.nim,
+                name: req.user.name,
+                email: req.user.email,
+            }
+        }
+    })
 })
 
 import mongoose from "mongoose";
 
 server.listen(process.env.PORT, () => {
     console.log('server running on http://localhost:3000')
-    mongoose.connect(process.env.MONGO_URI)
+    try {
+        mongoose.connect(process.env.MONGO_URI).then((r) => console.log('connect to mongoDB' + r)) 
+    } catch (error) {
+        console.log(error.message)
+    }
 })
