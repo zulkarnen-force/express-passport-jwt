@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import {body, validationResult} from 'express-validator'
+import cors from 'cors';
+
 
 import User from './db.js'
 
@@ -13,6 +15,7 @@ const server = http.createServer(app)
 
 app.use(express.json())
 app.use(passport.initialize())
+app.use(cors())
 import dotenv from 'dotenv'
 dotenv.config()
 
