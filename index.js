@@ -11,8 +11,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import bodyParser  from 'body-parser';
-import os from 'os';
-// ...
 
 // Set up the storage configuration for multer
 const storage = multer.diskStorage({
@@ -27,8 +25,7 @@ const storage = multer.diskStorage({
   });
 const upload = multer({ storage: storage, limits: 100 });
   
-import User from './db.js'
-
+import {User, File} from './db.js'
 
 const app = express()
 
@@ -37,7 +34,7 @@ const server = http.createServer(app)
 
 app.use(bodyParser.json());
 
-app.use(express.static(__dirname + '/uploads'));
+app.use('/images',express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
 app.use(cors())
 import dotenv from 'dotenv'
@@ -151,38 +148,64 @@ app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res)
 })
 
 const uploadSingleImage = upload.single('image');
-// Define the route for file upload
-app.post('/upload', (req, res) => {
-    uploadSingleImage(req, res, function (err) {
+
+app.post('/upload', passport.authenticate('jwt', {session: false}), (req, res) => {
+    
+    uploadSingleImage(req, res, async function  (err) {
+        
         if (err) {
             return res.status(400).send({ message: err.message })
         }
 
-        console.log(req.file.size)
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).send({ errors: {
+                message: 'please lampirkan image pada form data',
+                field: 'image'
+            } })
+        } 
         if (req.file.size >= 1000000 ) {
             return res.status(400).json({
                 'message':'terlalu besar Mas, max 10000 kb yoo'
             })
         }
-        const file = req.file;
 
-        return res.status(200).send({
-            message: 'your lovely image uploaded successfully 💖',
-            url: "https://express-passport-jwt-production.up.railway.app/" + file.filename
-        })
+        let id = randomUUID()
+        let user = {    
+            id: req.user.name,
+            nim: req.user.nim,
+            email: req.user.email
+        }
 
-        // if (!req.files) {
-        //     return res.status(400).json({ error: 'No file uploaded' });
-        //   }
-        //   return res.status(200).json({ message: 'File uploaded successfully' });
+        try {
+            const fileStorage = new File({
+                id, 
+                filename: req.file.originalname,
+                url: `/${req.file.filename}`,
+                uploaded_by: user
+            })
+            await fileStorage.save();
+            return res.status(200).send({
+                message: 'your lovely image uploaded successfully 💖',
+                url: "https://express-passport-jwt-production.up.railway.app/" + file.filename
+            })
+        } catch (error) {
+            return res.status(400).send({ errors: {message: error.message} })
+        }
     })
 
 })
     
-    
+app.get('/images', async (req, res) => {
+
+    let images = await File.find({}, { _id: 0 })
+    res.json(images);
+})
   
 
 import mongoose from "mongoose";
+import { randomUUID } from 'crypto'
 
 server.listen(process.env.PORT, () => {
     console.log('server running on http://localhost:3000')

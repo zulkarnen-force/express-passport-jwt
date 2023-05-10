@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const schema = mongoose.Schema({
     name: {
@@ -29,6 +29,27 @@ const schema = mongoose.Schema({
     }
 })
 
-const User = mongoose.model('user', schema);
 
+
+const fileSchema = mongoose.Schema({
+    filename: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    id: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    url: String,
+    uploaded_by: {
+        type: [mongoose.Schema.Types.Mixed]
+    },
+})
+
+const User = mongoose.model('user', schema);
+const File = mongoose.model('file', fileSchema);
+export {File, User};
 export default User;
+// export {User, File};

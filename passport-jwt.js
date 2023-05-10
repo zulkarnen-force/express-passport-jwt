@@ -1,6 +1,6 @@
 import passport from "passport"
 import {Strategy, ExtractJwt} from 'passport-jwt'
-import User from "./db.js"
+import {User} from "./db.js"
 import { ObjectId  as Ole} from "mongoose"
 
 let options = {}
