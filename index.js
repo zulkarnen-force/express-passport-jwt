@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
       cb(null, uniqueSuffix + fileExtension);
     }
   });
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: 100 });
   
 import User from './db.js'
 
@@ -157,19 +157,18 @@ app.post('/upload', (req, res) => {
         if (err) {
             return res.status(400).send({ message: err.message })
         }
-        const file = req.file;
 
-        // return res.status(200).send({
-        //     filename: file.filename,
-        //     mimetype: file.mimetype,
-        //     originalname: file.originalname,
-        //     size: file.size,
-        //     fieldname: file.fieldname
-        // })
+        console.log(req.file.size)
+        if (req.file.size >= 1000000 ) {
+            return res.status(400).json({
+                'message':'terlalu besar Mas, max 10000 kb yoo'
+            })
+        }
+        const file = req.file;
 
         return res.status(200).send({
             message: 'your lovely image uploaded successfully 💖',
-            url: os.hostname() + "/" + file.filename
+            url: "https://express-passport-jwt-production.up.railway.app/" + file.filename
         })
 
         // if (!req.files) {
