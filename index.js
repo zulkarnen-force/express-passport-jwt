@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import {body, validationResult} from 'express-validator'
 import cors from 'cors';
+import fileUpload  from 'express-fileupload';
+
 
 
 import User from './db.js'
@@ -12,7 +14,15 @@ import User from './db.js'
 
 const app = express()
 const server = http.createServer(app)
-
+app.use(
+    fileUpload({
+        limits: {
+            fileSize: 10000000,
+        },
+        abortOnLimit: true,
+    })
+);
+app.use(express.static('public'));
 app.use(express.json())
 app.use(passport.initialize())
 app.use(cors())
@@ -124,6 +134,16 @@ app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res)
         }
     })
 })
+
+
+app.post('/upload', (req, res) => {
+    console.log(req.files);
+        // Move the uploaded image to our upload folder
+        const { image } = req.files;
+        image.mv(__dirname + '/upload/' + image.name);
+        res.sendStatus(200);
+    res.sendStatus(200);
+});
 
 import mongoose from "mongoose";
 
