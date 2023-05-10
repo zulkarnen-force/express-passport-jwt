@@ -5,31 +5,46 @@ import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import {body, validationResult} from 'express-validator'
 import cors from 'cors';
-import fileUpload  from 'express-fileupload';
+import path from 'path';
+import multer from 'multer';    
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import bodyParser  from 'body-parser';
+import os from 'os';
+// ...
 
-
-
+// Set up the storage configuration for multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const fileExtension = path.extname(file.originalname);
+      cb(null, uniqueSuffix + fileExtension);
+    }
+  });
+const upload = multer({ storage: storage });
+  
 import User from './db.js'
 
 
 const app = express()
+
+
 const server = http.createServer(app)
-app.use(
-    fileUpload({
-        limits: {
-            fileSize: 10000000,
-        },
-        abortOnLimit: true,
-    })
-);
-app.use(express.static('public'));
-app.use(express.json())
+
+app.use(bodyParser.json());
+
+app.use(express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
 app.use(cors())
 import dotenv from 'dotenv'
 dotenv.config()
 
 import passportJwt from './passport-jwt.js'
+console.log(__dirname + "/uploads")
 
 app.get('/', (req, res) => {
     res.json({
@@ -135,15 +150,38 @@ app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res)
     })
 })
 
-
+const uploadSingleImage = upload.single('image');
+// Define the route for file upload
 app.post('/upload', (req, res) => {
-    console.log(req.files);
-        // Move the uploaded image to our upload folder
-        const { image } = req.files;
-        image.mv(__dirname + '/upload/' + image.name);
-        res.sendStatus(200);
-    res.sendStatus(200);
-});
+    uploadSingleImage(req, res, function (err) {
+        if (err) {
+            return res.status(400).send({ message: err.message })
+        }
+        const file = req.file;
+
+        // return res.status(200).send({
+        //     filename: file.filename,
+        //     mimetype: file.mimetype,
+        //     originalname: file.originalname,
+        //     size: file.size,
+        //     fieldname: file.fieldname
+        // })
+
+        return res.status(200).send({
+            message: 'your lovely image uploaded successfully 💖',
+            url: os.hostname() + "/" + file.filename
+        })
+
+        // if (!req.files) {
+        //     return res.status(400).json({ error: 'No file uploaded' });
+        //   }
+        //   return res.status(200).json({ message: 'File uploaded successfully' });
+    })
+
+})
+    
+    
+  
 
 import mongoose from "mongoose";
 
