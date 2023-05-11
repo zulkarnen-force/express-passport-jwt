@@ -34,7 +34,7 @@ const server = http.createServer(app)
 
 app.use(bodyParser.json());
 
-app.use('/images',express.static(__dirname + '/uploads'));
+app.use(express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
 // app.use(cors({
 //     origin: '*',
