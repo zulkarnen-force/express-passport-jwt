@@ -36,12 +36,13 @@ app.use(bodyParser.json());
 
 app.use('/images',express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
-app.use(cors())
+app.use(cors({
+    origin: '*',
+}))
 import dotenv from 'dotenv'
 dotenv.config()
 
 import passportJwt from './passport-jwt.js'
-console.log(__dirname + "/uploads")
 
 app.get('/', (req, res) => {
     res.json({
