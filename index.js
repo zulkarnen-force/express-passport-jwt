@@ -36,21 +36,20 @@ app.use(bodyParser.json());
 
 app.use('/images',express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
-app.use(cors({
-    origin: '*',
-    
-}))
+// app.use(cors({
+//     origin: '*',
+// }))
 import dotenv from 'dotenv'
 dotenv.config()
-app.use((req,res,next)=>{
-    res.setHeader('Access-Control-Allow-Origin','*');
-    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE');
-    res.setHeader('Access-Control-Allow-Methods','Content-Type','Authorization');
-    next(); 
-})
+// app.use((req,res,next)=>{
+//     res.setHeader('Access-Control-Allow-Origin','*');
+//     res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE');
+//     res.setHeader('Access-Control-Allow-Methods','Content-Type','Authorization');
+//     next(); 
+// })
 
 import passportJwt from './passport-jwt.js'
-
+app.use(cors());
 app.get('/', (req, res) => {
     res.json({
         result:{
@@ -206,7 +205,6 @@ app.post('/upload', passport.authenticate('jwt', {session: false}), (req, res) =
 })
     
 app.get('/images', async (req, res) => {
-
     let images = await File.find({}, { _id: 0 })
     res.json(images);
 })
