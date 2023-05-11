@@ -38,9 +38,16 @@ app.use('/images',express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
 app.use(cors({
     origin: '*',
+    
 }))
 import dotenv from 'dotenv'
 dotenv.config()
+app.use((req,res,next)=>{
+    res.setHeader('Access-Control-Allow-Origin','*');
+    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE');
+    res.setHeader('Access-Control-Allow-Methods','Content-Type','Authorization');
+    next(); 
+})
 
 import passportJwt from './passport-jwt.js'
 
