@@ -55,7 +55,7 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
 let allowOrigins = ['http://127.0.0.1:5500/', 'http://127.0.0.1:3000']
-app.use(cors({origin: allowOrigins}))
+app.use(cors({origin: "*", credentials: true, optionsSuccessStatus: 200}))
 import dotenv from 'dotenv'
 dotenv.config()
 
