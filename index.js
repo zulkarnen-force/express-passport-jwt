@@ -6,49 +6,63 @@ import passport from 'passport'
 import {body, validationResult} from 'express-validator'
 import cors from 'cors';
 import path from 'path';
-import multer from 'multer';    
+import multer, { memoryStorage } from 'multer';    
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import bodyParser  from 'body-parser';
+import { initializeApp } from "firebase/app";
+import config from './config.js'
+const firebaseConfig = {
+    apiKey: "AIzaSyCKHRftGxf8_ID9Epk9m2f-Qwb1KFeQilY",
+    authDomain: "personal-project-tekweb.firebaseapp.com",
+    projectId: "personal-project-tekweb",
+    storageBucket: "personal-project-tekweb.appspot.com",
+    messagingSenderId: "1029326080042",
+    appId: "1:1029326080042:web:edbe2eb5c5d6da01ac1b53"
+  };
 
-// Set up the storage configuration for multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const fileExtension = path.extname(file.originalname);
-      cb(null, uniqueSuffix + fileExtension);
-    }
-  });
-const upload = multer({ storage: storage, limits: 100 });
-  
+const firebaseApp = initializeApp(firebaseConfig);
+import {getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL} from 'firebase/storage';
+
+
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, 'uploads/');
+//     },
+//     filename: function (req, file, cb) {
+//       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+//       const fileExtension = path.extname(file.originalname);
+//       cb(null, uniqueSuffix + fileExtension);
+//     }
+// });
+
+let upload = multer({storage: multer.memoryStorage(),
+     filename: function (req, file, cb) {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const fileExtension = path.extname(file.originalname);
+          cb(null, uniqueSuffix + fileExtension);
+}});
+
+// const upload = multer({ storage: storage, limits: 100 });
+
 import {User, File} from './db.js'
 
 const app = express()
-
-
 const server = http.createServer(app)
 
 app.use(bodyParser.json());
-
 app.use(express.static(__dirname + '/uploads'));
 app.use(passport.initialize())
-// app.use(cors({
-//     origin: '*',
-// }))
+app.use(cors({
+    origin: '*',
+}))
 import dotenv from 'dotenv'
 dotenv.config()
-// app.use((req,res,next)=>{
-//     res.setHeader('Access-Control-Allow-Origin','*');
-//     res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE');
-//     res.setHeader('Access-Control-Allow-Methods','Content-Type','Authorization');
-//     next(); 
-// })
+
 
 import passportJwt from './passport-jwt.js'
+
 app.use(cors());
 app.get('/', (req, res) => {
     res.json({
@@ -155,7 +169,7 @@ app.get('/protected', passport.authenticate('jwt', {session: false}), (req, res)
 })
 
 const uploadSingleImage = upload.single('image');
-
+const firebaseStorage = getStorage(firebaseApp);
 app.post('/upload', passport.authenticate('jwt', {session: false}), (req, res) => {
     
     uploadSingleImage(req, res, async function  (err) {
@@ -178,24 +192,33 @@ app.post('/upload', passport.authenticate('jwt', {session: false}), (req, res) =
             })
         }
 
+
+        let metadata = {
+            contentType: req.file.mimetype
+        }
+
         let id = randomUUID()
         let user = {    
             id: req.user.name,
             nim: req.user.nim,
             email: req.user.email
         }
-
         try {
+            let imgId = randomUUID()
+            let filename = imgId + req.file.originalname;
+            const refer = ref(firebaseStorage, 'tekweb/'+ filename);
+            let snapshot = await uploadBytesResumable(refer, req.file.buffer, metadata);
+            let downloadUrl = await getDownloadURL(snapshot.ref)
             const fileStorage = new File({
                 id, 
                 filename: req.file.originalname,
-                url: `/${req.file.filename}`,
+                url: downloadUrl,
                 uploaded_by: user
             })
             await fileStorage.save();
             return res.status(200).send({
                 message: 'your lovely image uploaded successfully 💖',
-                url: "https://express-passport-jwt-production.up.railway.app/" + file.filename
+                url: downloadUrl
             })
         } catch (error) {
             return res.status(400).send({ errors: {message: error.message} })
@@ -207,6 +230,8 @@ app.post('/upload', passport.authenticate('jwt', {session: false}), (req, res) =
 app.get('/images', async (req, res) => {
     let images = await File.find({}, { _id: 0 })
     res.json(images);
+    // we'll create a Reference to that folder:
+
 })
   
 
