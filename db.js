@@ -52,4 +52,3 @@ const User = mongoose.model('user', schema);
 const File = mongoose.model('file', fileSchema);
 export {File, User};
 export default User;
-// export {User, File};

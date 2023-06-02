@@ -71,6 +71,14 @@ app.get('/', (req, res) => {
     })
 })
 
+
+app.get('/users', async (req, res) => {
+    let users = await User.find({});
+    return res.json({
+        result: users
+    });
+})
+
 app.post('/register', async (req, res) => {
     
     try {
