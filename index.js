@@ -79,8 +79,19 @@ app.get('/users', async (req, res) => {
     });
 })
 
+app.delete('/users/:nim', async (req, res) => {
+    let response = await User.findOneAndRemove({nim: req.params.nim});
+    if (!response) {
+        return res.status(404).json( {errors: {
+            message:'user not found'
+        }})
+    }
+    return res.status(200).json( {result: {
+        message:'user has been deleted successfully'
+    }})
+})
+
 app.post('/register', async (req, res) => {
-    
     try {
         if (!req.body.password) {
             throw new Error('password required')
