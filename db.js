@@ -4,17 +4,17 @@ const schema = mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     nim: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     email: {
         type: String,
         required: true,
-        unique: true,
+        // unique: true,
         validate: {
             validator: function(v) {
                 return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);

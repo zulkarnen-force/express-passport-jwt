@@ -72,6 +72,34 @@ app.get('/', (req, res) => {
 })
 
 
+app.get('/users/:nim', async (req, res) => {
+    let users = await User.find({nim: req.params.nim});
+    return res.json({
+        result: users
+    });
+})
+
+app.put('/users/:nim', async (req, res) => {
+    const nimUser = req.params.nim;
+    const updatedData = req.body;
+    try {
+        let user = await User.findOneAndUpdate({nim: nimUser}, updatedData);
+        if (!user) {
+            return res.status(404).json( {errors: {
+                message:'user not found'
+            }})
+        }
+        return res.status(200).json( {result: {
+            message:'user has been updated successfully'
+        }})
+    } catch (error) {
+        return res.status(200).json( {errors: {
+            message: error.message
+        }})
+    }
+    
+})
+
 app.get('/users', async (req, res) => {
     let users = await User.find({});
     return res.json({
@@ -255,6 +283,7 @@ app.get('/images', async (req, res) => {
 
 import mongoose from "mongoose";
 import { randomUUID } from 'crypto'
+import { useDatabase } from 'vuefire'
 
 server.listen(process.env.PORT, () => {
     console.log('server running on http://localhost:3000')
